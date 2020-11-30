@@ -1,7 +1,6 @@
 package physarum
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"math"
@@ -9,6 +8,22 @@ import (
 
 	"github.com/gonum/stat"
 )
+
+func makeGammaLookupTable(gamma float32) func(t float32) float32 {
+	const size = 65536
+	table := make([]float32, size)
+	for i := range table {
+		t := float64(i) / (size - 1)
+		table[i] = float32(math.Pow(t, float64(gamma)))
+	}
+	factor := float32(size - 1)
+	return func(t float32) float32 {
+		i := int(t * factor)
+		return table[i]
+	}
+}
+
+var lookup = makeGammaLookupTable(1 / 2.2)
 
 func Image(w, h int, grids [][]float32, palette Palette, min, max, gamma float32) image.Image {
 	im := image.NewRGBA(image.Rect(0, 0, w, h))
@@ -27,25 +42,10 @@ func Image(w, h int, grids [][]float32, palette Palette, min, max, gamma float32
 			minValues[i] = 0
 			// minValues[i] = stat.Quantile(0.01, stat.Empirical, temp, nil)
 			maxValues[i] = float32(stat.Quantile(0.99, stat.Empirical, temp, nil))
-			c := palette[i]
-			fmt.Printf("%d #%02X%02X%02X %.3f\n", i, c.R, c.G, c.B, maxValues[i])
+			//c := palette[i]
+			//fmt.Printf("%d #%02X%02X%02X %.3f\n", i, c.R, c.G, c.B, maxValues[i])
 		}
 	}
-
-	makeGammaLookupTable := func(gamma float32) func(t float32) float32 {
-		const size = 65536
-		table := make([]float32, size)
-		for i := range table {
-			t := float64(i) / (size - 1)
-			table[i] = float32(math.Pow(t, float64(gamma)))
-		}
-		factor := float32(size - 1)
-		return func(t float32) float32 {
-			i := int(t * factor)
-			return table[i]
-		}
-	}
-	lookup := makeGammaLookupTable(gamma)
 
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {

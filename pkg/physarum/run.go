@@ -3,34 +3,58 @@ package physarum
 import (
 	"fmt"
 	"image/png"
+	"log"
 	"math/rand"
+	"os"
+	"os/exec"
 	"time"
 )
 
 const (
-	width      = 1024
-	height     = 1024
-	particles  = 1 << 20
+	sz         = 512
+	width      = sz
+	height     = sz
+	particles  = 1 << 18
 	iterations = 500
 	blurRadius = 1
-	blurPasses = 2
+	blurPasses = 1
 	zoomFactor = 1
 )
 
 func one(model *Model, iterations int) {
 	now := time.Now().UTC().UnixNano() / 1000
-	path := fmt.Sprintf("out%d.png", now)
+	dir := fmt.Sprintf("out/%d", now)
+	os.MkdirAll(dir, 0777)
 	fmt.Println()
-	fmt.Println(path)
+	fmt.Println(dir)
 	fmt.Println(len(model.Particles), "particles")
 	PrintConfigs(model.Configs, model.AttractionTable)
 	SummarizeConfigs(model.Configs)
+	palette := RandomPalette()
 	for i := 0; i < iterations; i++ {
 		model.Step()
+		im := Image(model.W, model.H, model.Data(), palette, 0, 0, 1/2.2)
+		path := fmt.Sprintf("out/%d/%d.png", now, i)
+		if err := SavePNG(path, im, png.DefaultCompression); err != nil {
+			log.Panic(err)
+		}
+		fmt.Printf("%d / %d\r", i, iterations)
 	}
-	palette := RandomPalette()
-	im := Image(model.W, model.H, model.Data(), palette, 0, 0, 1/2.2)
-	SavePNG(path, im, png.DefaultCompression)
+	cmd := exec.Command(
+		"ffmpeg",
+		"-start_number", "1",
+		"-i", fmt.Sprintf("%s/%s.png", dir, "%d"),
+		"-c:v", "libx264",
+		"-r", "30",
+		"-pix_fmt", "yuv420p",
+		fmt.Sprintf("out/%d.mp4", now),
+	)
+	println(cmd.String())
+	out, err := cmd.CombinedOutput()
+	println(string(out))
+	if err != nil {
+		log.Panicf("failed to mp4: %v", err)
+	}
 }
 
 func frames(model *Model, rate int) {
@@ -69,15 +93,13 @@ func Run() {
 		frames(model, 3)
 	}
 
-	for {
-		n := 2 + rand.Intn(4)
-		configs := RandomConfigs(n)
-		table := RandomAttractionTable(n)
-		model := NewModel(
-			width, height, particles, blurRadius, blurPasses, zoomFactor,
-			configs, table)
-		start := time.Now()
-		one(model, iterations)
-		fmt.Println(time.Since(start))
-	}
+	n := 2 + rand.Intn(4)
+	configs := RandomConfigs(n)
+	table := RandomAttractionTable(n)
+	model := NewModel(
+		width, height, particles, blurRadius, blurPasses, zoomFactor,
+		configs, table)
+	start := time.Now()
+	one(model, iterations)
+	fmt.Println(time.Since(start))
 }

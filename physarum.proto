@@ -1,0 +1,22 @@
+syntax = "proto3";
+package physarium;
+option go_package = "github.com/theo-m/physarium/pb";
+
+message Config {
+  int32 width = 1;
+  int32 height = 2;
+  int32 particles = 3;
+  int32 iterations = 4;
+  int32 blur_radius = 5;
+  int32 blur_passes = 6;
+  float zoom_factor = 7;
+  int32 num_grids = 8;
+}
+
+message Event {
+  oneof content {
+    bytes picture = 1;
+    bytes video = 2;
+    string step = 3;
+  }
+}
