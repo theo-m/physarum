@@ -29,8 +29,12 @@ type Model struct {
 }
 
 func NewModel(
-	w, h, numParticles, blurRadius, blurPasses int, zoomFactor float32,
-	configs []*pb.AgentConfig, attractionTable [][]float32) *Model {
+	w, h, numParticles, blurRadius, blurPasses int,
+	zoomFactor float32,
+	configs []*pb.AgentConfig,
+	attractionTable [][]float32,
+	distrib pb.Config_InitDistribution,
+) *Model {
 
 	grids := make([]*Grid, len(configs))
 	numParticlesPerConfig := int(math.Ceil(
@@ -49,19 +53,79 @@ func NewModel(
 		particles,
 		0,
 	}
-	m.StartOver()
+	m.StartOver(distrib)
 	return m
 }
 
-func (m *Model) StartOver() {
+func (m *Model) StartOver(distribution pb.Config_InitDistribution) {
 	numParticlesPerConfig := len(m.Particles) / len(m.AgentConfigs)
 	m.Particles = m.Particles[:0]
 	m.Iteration = 0
+	switch distribution {
+	case pb.Config_UNIFORM:
+		for c := range m.AgentConfigs {
+			m.Grids[c] = NewGrid(m.W, m.H)
+			for i := 0; i < numParticlesPerConfig; i++ {
+				x := rand.Float32() * float32(m.W)
+				y := rand.Float32() * float32(m.H)
+				a := rand.Float32() * 2 * math.Pi
+				p := Particle{x, y, a, uint32(c)}
+				m.Particles = append(m.Particles, p)
+			}
+		}
+	case pb.Config_CENTROIDS:
+		ws, hs := float32(m.W)/float32(len(m.AgentConfigs)), float32(m.H)/float32(len(m.AgentConfigs))
+		for c := range m.AgentConfigs {
+			m.Grids[c] = NewGrid(m.W, m.H)
+			pcx, pcy := rand.Float32()*2*ws, rand.Float32()*2*hs
+			for i := 0; i < numParticlesPerConfig; i++ {
+				x := float32(rand.NormFloat64())*ws + pcx
+				y := float32(rand.NormFloat64())*hs + pcy
+				a := rand.Float32() * 2 * math.Pi
+				p := Particle{x, y, a, uint32(c)}
+				m.Particles = append(m.Particles, p)
+			}
+		}
+	case pb.Config_CENTRE:
+		for c := range m.AgentConfigs {
+			m.Grids[c] = NewGrid(m.W, m.H)
+			for i := 0; i < numParticlesPerConfig; i++ {
+				x := float32(rand.NormFloat64()) * float32(m.W) / 4
+				y := float32(rand.NormFloat64()) * float32(m.H) / 4
+				a := rand.Float32() * 2 * math.Pi
+				p := Particle{x, y, a, uint32(c)}
+				m.Particles = append(m.Particles, p)
+			}
+		}
+	case pb.Config_GRID:
+		offset := float32(10)
+		width := float32(5)
+		nlines := 10
+		for c := range m.AgentConfigs {
+			m.Grids[c] = NewGrid(m.W, m.H)
+			for i := 0; i < numParticlesPerConfig; i++ {
+				var x, y, a float32
+				if c%2 == 0 { // vertical lines
+					x = offset*float32(c) + rand.Float32()*width*float32(m.W)/float32(len(m.AgentConfigs))*float32(i%nlines-nlines/2)
+					y = rand.Float32() * float32(m.H)
+					a = math.Pi/2*float32(math.Pow(-1, float64(rand.Intn(9)%2))) + rand.Float32()/4
+				} else { // horizontal lines
+					x = rand.Float32() * float32(m.W)
+					y = offset*float32(c) + rand.Float32()*width*float32(m.H)/float32(len(m.AgentConfigs))*float32(i%nlines-nlines/2)
+					a = math.Pi*float32(math.Pow(-1, float64(rand.Intn(9)%2))) + rand.Float32()/4
+				}
+				p := Particle{x, y, a, uint32(c)}
+				m.Particles = append(m.Particles, p)
+			}
+		}
+	}
+	ws, hs := float32(m.W)/float32(len(m.AgentConfigs)), float32(m.H)/float32(len(m.AgentConfigs))
 	for c := range m.AgentConfigs {
 		m.Grids[c] = NewGrid(m.W, m.H)
+		//pcx, pcy := rand.Float32() * 2 * ws, rand.Float32() * 2 * hs
 		for i := 0; i < numParticlesPerConfig; i++ {
-			x := rand.Float32() * float32(m.W)
-			y := rand.Float32() * float32(m.H)
+			x := float32(rand.NormFloat64()) * ws
+			y := float32(rand.NormFloat64()) * hs
 			a := rand.Float32() * 2 * math.Pi
 			p := Particle{x, y, a, uint32(c)}
 			m.Particles = append(m.Particles, p)

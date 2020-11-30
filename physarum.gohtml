@@ -101,8 +101,19 @@
               <span id="zoomf" class="text-gray-500">{{ .ZoomFactor }}</span>
             </div>
           </label>
-            <hr class="py-4"/>
+          <label class="flex justify-between items-center p-1">
+            <span>distrib</span>
+            <select class="text-gray-500" name="distrib">
+              <option value="1">uniform</option>
+              <option value="2">centroids</option>
+              <option value="3">centre</option>
+              <option value="4">grid</option>
+            </select>
+          </label>
+          <hr class="py-4"/>
+          <div id="#agents">
           {{ range $i, $a := .Agents }}
+            <div id="agent{{ $i }}">
             <label class="flex justify-between space-x-1"
               ><span>color</span
               ><input
@@ -158,7 +169,13 @@
                 value="{{ printf "%.2f" $a.DecayFactor }}"
                 name="agent[{{ $i }}][decayFactor]"
             /></label>
+            </div>
           {{ end }}
+          </div>
+          <div class="flex items-center space-x-2 mx-auto">
+            <button type="button" id="addAg">+</button>
+            <button type="button" id="delAg">-</button>
+          </div>
           <input type="submit" />
         </form>
         <div class="flex flex-col">
@@ -178,6 +195,8 @@
       const videoSrc = $("#videoSource");
       const img = $("#lastImg");
       const step = $("#step");
+      const addAg = $("#addAg");
+      const delAg = $("#delAg");
       img.hide();
       step.hide();
       video.hide();
@@ -235,22 +254,32 @@
         cfg.setBlurRadius(parseInt($("input[name=blurRadius]").val()));
         cfg.setBlurPasses(parseInt($("input[name=blurPasses]").val()));
         cfg.setZoomFactor(parseFloat($("input[name=zoomFactor]").val()));
+        cfg.setIdist(parseInt($("select[name=distrib]").val()))
 
-        let ag;
-        {{ range $i, $a := .Agents }}
-        ag = new proto.physarium.AgentConfig()
-        ag.setColor($('input[name="agent[{{ $i }}][color]"]').val())
-        ag.setSensorAngle(parseFloat($('input[name="agent[{{ $i }}][sensorAngle]"]').val()))
-        ag.setSensorDistance(parseFloat($('input[name="agent[{{ $i }}][sensorDistance]"]').val()))
-        ag.setRotationAngle(parseFloat($('input[name="agent[{{ $i }}][rotationAngle]"]').val()))
-        ag.setStepDistance(parseFloat($('input[name="agent[{{ $i }}][stepDistance]"]').val()))
-        ag.setDepositionAmount(parseFloat($('input[name="agent[{{ $i }}][depositionAmount]"]').val()))
-        ag.setDecayFactor(parseFloat($('input[name="agent[{{ $i }}][decayFactor]"]').val()))
-        cfg.addAgents(ag);
-        {{ end }}
+        const nbAg = $("div[id^=agent]").length
+        for (let i = 0; i < nbAg; i++) {
+          const ag = new proto.physarium.AgentConfig()
+          ag.setColor($(`input[name="agent[${i}][color]"]`).val())
+          ag.setSensorAngle(parseFloat($(`input[name="agent[${i}][sensorAngle]"]`).val()))
+          ag.setSensorDistance(parseFloat($(`input[name="agent[${i}][sensorDistance]"]`).val()))
+          ag.setRotationAngle(parseFloat($(`input[name="agent[${i}][rotationAngle]"]`).val()))
+          ag.setStepDistance(parseFloat($(`input[name="agent[${i}][stepDistance]"]`).val()))
+          ag.setDepositionAmount(parseFloat($(`input[name="agent[${i}][depositionAmount]"]`).val()))
+          ag.setDecayFactor(parseFloat($(`input[name="agent[${i}][decayFactor]"]`).val()))
+          cfg.addAgents(ag);
+        }
         ws.send(cfg.serializeBinary());
         video.hide();
       });
+
+      delAg.click(() => {
+        const nbAg = $("div[id^=agent]").length
+        $(`div[id^=agent${nbAg - 1}]`).remove()
+      })
+      addAg.click(() => {
+        const nbAg = $("div[id^=agent]").length
+        $(`div[id^=agent${nbAg - 1}]`).clone().prop("id", `agent${nbAg}`).insertAfter(`div[id^=agent${nbAg - 1}]`  )
+      })
     </script>
   </body>
 </html>

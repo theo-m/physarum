@@ -17,8 +17,8 @@ const (
 	rotationAngleMax    = 120
 	stepDistanceMin     = 0.2
 	stepDistanceMax     = 2
-	depositionAmountMin = 5
-	depositionAmountMax = 5
+	depositionAmountMin = 4
+	depositionAmountMax = 6
 	decayFactorMin      = 0.1
 	decayFactorMax      = 0.5
 

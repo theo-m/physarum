@@ -12,6 +12,14 @@ message Config {
   float zoom_factor = 7;
   repeated AgentConfig agents = 9;
   repeated float interaction_matrix = 10;
+  enum InitDistribution {
+    UNK = 0;
+    UNIFORM = 1;
+    CENTROIDS = 2;
+    CENTRE = 3;
+    GRID = 4;
+  }
+  InitDistribution idist = 11;
 }
 
 message AgentConfig {

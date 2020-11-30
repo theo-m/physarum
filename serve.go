@@ -85,6 +85,7 @@ func newLaunch(ws *websocket.Conn, cfg *pb.Config) {
 		cfg.ZoomFactor,
 		cfg.Agents,
 		itcMtx,
+		cfg.Idist,
 	)
 	now := time.Now().UTC().UnixNano() / 1000
 	dir := fmt.Sprintf("out/%d", now)

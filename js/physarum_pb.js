@@ -14,6 +14,7 @@ var global = Function('return this')();
 
 goog.exportSymbol('proto.physarium.AgentConfig', null, global);
 goog.exportSymbol('proto.physarium.Config', null, global);
+goog.exportSymbol('proto.physarium.Config.InitDistribution', null, global);
 goog.exportSymbol('proto.physarium.Event', null, global);
 goog.exportSymbol('proto.physarium.Event.ContentCase', null, global);
 /**
@@ -127,7 +128,8 @@ proto.physarium.Config.toObject = function(includeInstance, msg) {
     zoomFactor: jspb.Message.getFloatingPointFieldWithDefault(msg, 7, 0.0),
     agentsList: jspb.Message.toObjectList(msg.getAgentsList(),
     proto.physarium.AgentConfig.toObject, includeInstance),
-    interactionMatrixList: (f = jspb.Message.getRepeatedFloatingPointField(msg, 10)) == null ? undefined : f
+    interactionMatrixList: (f = jspb.Message.getRepeatedFloatingPointField(msg, 10)) == null ? undefined : f,
+    idist: jspb.Message.getFieldWithDefault(msg, 11, 0)
   };
 
   if (includeInstance) {
@@ -200,6 +202,10 @@ proto.physarium.Config.deserializeBinaryFromReader = function(msg, reader) {
     case 10:
       var value = /** @type {!Array<number>} */ (reader.readPackedFloat());
       msg.setInteractionMatrixList(value);
+      break;
+    case 11:
+      var value = /** @type {!proto.physarium.Config.InitDistribution} */ (reader.readEnum());
+      msg.setIdist(value);
       break;
     default:
       reader.skipField();
@@ -294,8 +300,26 @@ proto.physarium.Config.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
+  f = message.getIdist();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      11,
+      f
+    );
+  }
 };
 
+
+/**
+ * @enum {number}
+ */
+proto.physarium.Config.InitDistribution = {
+  UNK: 0,
+  UNIFORM: 1,
+  CENTROIDS: 2,
+  CENTRE: 3,
+  GRID: 4
+};
 
 /**
  * optional int32 width = 1;
@@ -495,6 +519,24 @@ proto.physarium.Config.prototype.addInteractionMatrix = function(value, opt_inde
  */
 proto.physarium.Config.prototype.clearInteractionMatrixList = function() {
   return this.setInteractionMatrixList([]);
+};
+
+
+/**
+ * optional InitDistribution idist = 11;
+ * @return {!proto.physarium.Config.InitDistribution}
+ */
+proto.physarium.Config.prototype.getIdist = function() {
+  return /** @type {!proto.physarium.Config.InitDistribution} */ (jspb.Message.getFieldWithDefault(this, 11, 0));
+};
+
+
+/**
+ * @param {!proto.physarium.Config.InitDistribution} value
+ * @return {!proto.physarium.Config} returns this
+ */
+proto.physarium.Config.prototype.setIdist = function(value) {
+  return jspb.Message.setProto3EnumField(this, 11, value);
 };
 
 
