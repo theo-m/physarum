@@ -5,12 +5,23 @@ option go_package = "github.com/theo-m/physarium/pb";
 message Config {
   int32 width = 1;
   int32 height = 2;
-  int32 particles = 3;
+  int64 particles = 3;
   int32 iterations = 4;
   int32 blur_radius = 5;
   int32 blur_passes = 6;
   float zoom_factor = 7;
-  int32 num_grids = 8;
+  repeated AgentConfig agents = 9;
+  repeated float interaction_matrix = 10;
+}
+
+message AgentConfig {
+  float sensor_angle = 1;
+  float sensor_distance = 2;
+  float rotation_angle = 3;
+  float step_distance = 4;
+  float deposition_amount = 5;
+  float decay_factor = 6;
+  string color = 7;
 }
 
 message Event {

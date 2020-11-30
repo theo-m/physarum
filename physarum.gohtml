@@ -7,11 +7,18 @@
       crossorigin="anonymous"
     ></script>
     <script src="/public/bundle.js"></script>
+      <link
+              rel="stylesheet"
+              href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css"
+      />
+    <style>
+      input[type=number] {
+        border-bottom: lightgray 1px solid;
+        text-align: right;
+        color: grey;
+      }
+    </style>
   </head>
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css"
-  />
   <body class="mx-auto h-full px-24">
     <div class="flex flex-col flex-fill pb-24 space-y-4">
       <div class="font-medium bg-grey-100 py-4 px-2 border-b">Physarum</div>
@@ -19,7 +26,12 @@
         <form id="config" class="flex flex-col">
           <label class="flex justify-between items-center p-1">
             <span>width</span>
-            <input type="number" name="width" placeholder="width" value="512" />
+            <input
+              type="number"
+              name="width"
+              placeholder="width"
+              value="{{ .Width }}"
+            />
           </label>
           <label class="flex justify-between items-center p-1">
             <span>height</span>
@@ -27,7 +39,7 @@
               type="number"
               name="height"
               placeholder="height"
-              value="512"
+              value="{{ .Height }}"
             />
           </label>
           <label class="flex justify-between items-center p-1">
@@ -36,7 +48,8 @@
               type="number"
               name="iterations"
               placeholder="iterations"
-              value="10"
+              step="100"
+              value="{{ .Iterations }}"
             />
           </label>
           <label class="flex justify-between items-center p-1">
@@ -45,7 +58,7 @@
               type="number"
               name="blurRadius"
               placeholder="blurRadius"
-              value="2"
+              value="{{ .BlurRadius }}"
             />
           </label>
           <label class="flex justify-between items-center p-1">
@@ -54,37 +67,22 @@
               type="number"
               name="blurPasses"
               placeholder="blurPasses"
-              value="1"
+              value="{{ .BlurPasses }}"
             />
           </label>
           <label class="flex justify-between items-center p-1">
-            <span>num particles (2^)</span>
+            <span>num particles</span>
             <div class="flex items-center space-x-2">
               <input
                 type="range"
                 name="particles"
                 placeholder="particles"
-                min="10"
-                value="16"
-                max="20"
+                min="10000"
+                value="{{ .Particles }}"
+                max="2000000"
                 onchange="$('#pf').text(this.value)"
               />
-              <span id="pf" class="text-gray-500">16</span>
-            </div>
-          </label>
-          <label class="flex justify-between items-center p-1">
-            <span>num grids </span>
-            <div class="flex items-center space-x-2">
-              <input
-                type="range"
-                name="numGrids"
-                placeholder="4"
-                min="2"
-                value="4"
-                max="5"
-                onchange="$('#gridsf').text(this.value)"
-              />
-              <span id="gridsf" class="text-gray-500">4</span>
+              <span id="pf" class="text-gray-500">{{ .Particles }}</span>
             </div>
           </label>
           <label class="flex justify-between items-center p-1">
@@ -95,14 +93,72 @@
                 name="zoomFactor"
                 placeholder="zoomFactor"
                 min="0.25"
-                value="1"
+                value="{{ .ZoomFactor }}"
                 max="2"
                 step="0.05"
                 onchange="$('#zoomf').text(this.value)"
               />
-              <span id="zoomf" class="text-gray-500">1</span>
+              <span id="zoomf" class="text-gray-500">{{ .ZoomFactor }}</span>
             </div>
           </label>
+            <hr class="py-4"/>
+          {{ range $i, $a := .Agents }}
+            <label class="flex justify-between space-x-1"
+              ><span>color</span
+              ><input
+                type="color"
+                value="{{ $a.Color }}"
+                name="agent[{{ $i }}][color]"
+            /></label>
+            <label class="flex justify-between space-x-1"
+              ><span>sensorAngle</span
+              ><input
+                type="number"
+                step="0.01"
+                value="{{ printf "%.2f" $a.SensorAngle }}"
+                name="agent[{{ $i }}][sensorAngle]"
+            /></label>
+            <label class="flex justify-between space-x-1"
+              ><span>sensorDistance</span
+              ><input
+                type="number"
+                step="0.01"
+                value="{{ printf "%.2f" $a.SensorDistance }}"
+                name="agent[{{ $i }}][sensorDistance]"
+            /></label>
+            <label class="flex justify-between space-x-1"
+              ><span>rotationAngle</span
+              ><input
+                type="number"
+                step="0.01"
+                value="{{ printf "%.2f" $a.RotationAngle }}"
+                name="agent[{{ $i }}][rotationAngle]"
+            /></label>
+            <label class="flex justify-between space-x-1"
+              ><span>stepDistance</span
+              ><input
+                type="number"
+                step="0.01"
+                value="{{ printf "%.2f" $a.StepDistance }}"
+                name="agent[{{ $i }}][stepDistance]"
+            /></label>
+            <label class="flex justify-between space-x-1"
+              ><span>depositionAmount</span
+              ><input
+                type="number"
+                step="0.01"
+                value="{{ printf "%.2f" $a.DepositionAmount }}"
+                name="agent[{{ $i }}][depositionAmount]"
+            /></label>
+            <label class="flex justify-between space-x-1 pb-4"
+              ><span>decayFactor</span
+              ><input
+                type="number"
+                step="0.01"
+                value="{{ printf "%.2f" $a.DecayFactor }}"
+                name="agent[{{ $i }}][decayFactor]"
+            /></label>
+          {{ end }}
           <input type="submit" />
         </form>
         <div class="flex flex-col">
@@ -174,12 +230,24 @@
         const cfg = new proto.physarium.Config();
         cfg.setWidth(parseInt($("input[name=width]").val()));
         cfg.setHeight(parseInt($("input[name=height]").val()));
-        cfg.setParticles(2 ** parseInt($("input[name=particles]").val()));
-        cfg.setNumGrids(parseInt($("input[name=numGrids]").val()));
+        cfg.setParticles(parseInt($("input[name=particles]").val()));
         cfg.setIterations(parseInt($("input[name=iterations]").val()));
         cfg.setBlurRadius(parseInt($("input[name=blurRadius]").val()));
         cfg.setBlurPasses(parseInt($("input[name=blurPasses]").val()));
         cfg.setZoomFactor(parseFloat($("input[name=zoomFactor]").val()));
+
+        let ag;
+        {{ range $i, $a := .Agents }}
+        ag = new proto.physarium.AgentConfig()
+        ag.setColor($('input[name="agent[{{ $i }}][color]"]').val())
+        ag.setSensorAngle(parseFloat($('input[name="agent[{{ $i }}][sensorAngle]"]').val()))
+        ag.setSensorDistance(parseFloat($('input[name="agent[{{ $i }}][sensorDistance]"]').val()))
+        ag.setRotationAngle(parseFloat($('input[name="agent[{{ $i }}][rotationAngle]"]').val()))
+        ag.setStepDistance(parseFloat($('input[name="agent[{{ $i }}][stepDistance]"]').val()))
+        ag.setDepositionAmount(parseFloat($('input[name="agent[{{ $i }}][depositionAmount]"]').val()))
+        ag.setDecayFactor(parseFloat($('input[name="agent[{{ $i }}][decayFactor]"]').val()))
+        cfg.addAgents(ag);
+        {{ end }}
         ws.send(cfg.serializeBinary());
         video.hide();
       });

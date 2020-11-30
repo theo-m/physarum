@@ -3,6 +3,10 @@ package physarum
 import (
 	"fmt"
 	"math/rand"
+
+	"github.com/lucasb-eyer/go-colorful"
+
+	"github.com/theo-m/physarum/pkg/pb"
 )
 
 const (
@@ -25,16 +29,7 @@ const (
 	repulsionFactorStd   = 0.5
 )
 
-type Config struct {
-	SensorAngle      float32
-	SensorDistance   float32
-	RotationAngle    float32
-	StepDistance     float32
-	DepositionAmount float32
-	DecayFactor      float32
-}
-
-func RandomConfig() Config {
+func RandomAgentConfig() *pb.AgentConfig {
 	uniform := func(min, max float32) float32 {
 		return min + rand.Float32()*(max-min)
 	}
@@ -46,7 +41,7 @@ func RandomConfig() Config {
 	depositionAmount := uniform(depositionAmountMin, depositionAmountMax)
 	decayFactor := uniform(decayFactorMin, decayFactorMax)
 
-	return Config{
+	return &pb.AgentConfig{
 		SensorAngle:      sensorAngle,
 		SensorDistance:   sensorDistance,
 		RotationAngle:    rotationAngle,
@@ -56,10 +51,12 @@ func RandomConfig() Config {
 	}
 }
 
-func RandomConfigs(n int) []Config {
-	configs := make([]Config, n)
+func RandomAgentConfigs(n int) []*pb.AgentConfig {
+	configs := make([]*pb.AgentConfig, n)
+	palette, _ := colorful.HappyPalette(n)
 	for i := range configs {
-		configs[i] = RandomConfig()
+		configs[i] = RandomAgentConfig()
+		configs[i].Color = palette[i].Hex()
 	}
 	return configs
 }
@@ -83,7 +80,7 @@ func RandomAttractionTable(n int) [][]float32 {
 	return result
 }
 
-func PrintConfigs(configs []Config, table [][]float32) {
+func PrintConfigs(configs []*pb.AgentConfig, table [][]float32) {
 	fmt.Println("configs = []Config{")
 	for _, c := range configs {
 		fmt.Printf("\tConfig{%v, %v, %v, %v, %v, %v},\n",
@@ -109,7 +106,7 @@ func PrintConfigs(configs []Config, table [][]float32) {
 	fmt.Println("}")
 }
 
-func SummarizeConfigs(configs []Config) {
+func SummarizeConfigs(configs []*pb.AgentConfig) {
 	summarize := func(name string, getter func(i int) float32) {
 		fmt.Printf("%s ", name)
 		for i := 0; i < 18-len(name); i++ {
@@ -139,4 +136,24 @@ func SummarizeConfigs(configs []Config) {
 	summarize("DecayFactor", func(i int) float32 {
 		return configs[i].DecayFactor
 	})
+}
+
+func RandomConfig() *pb.Config {
+	n := 4 + rand.Intn(4)
+	itcMtx := make([]float32, n*n)
+	rndMtx := RandomAttractionTable(n)
+	for i := 0; i < n*n; i++ {
+		itcMtx[i] = rndMtx[i/n][i%n]
+	}
+	return &pb.Config{
+		Width:             512,
+		Height:            512,
+		Particles:         1 << (11 + rand.Intn(10)),
+		Iterations:        (1 + rand.Int31n(20)) * 100,
+		BlurRadius:        2,
+		BlurPasses:        1,
+		ZoomFactor:        1,
+		Agents:            RandomAgentConfigs(n),
+		InteractionMatrix: itcMtx,
+	}
 }

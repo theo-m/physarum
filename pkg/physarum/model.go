@@ -1,6 +1,9 @@
 package physarum
 
 import (
+	"github.com/lucasb-eyer/go-colorful"
+	"github.com/theo-m/physarum/pkg/pb"
+	"image/color"
 	"math"
 	"math/rand"
 	"runtime"
@@ -16,7 +19,7 @@ type Model struct {
 
 	ZoomFactor float32
 
-	Configs         []Config
+	AgentConfigs    []*pb.AgentConfig
 	AttractionTable [][]float32
 
 	Grids     []*Grid
@@ -27,7 +30,7 @@ type Model struct {
 
 func NewModel(
 	w, h, numParticles, blurRadius, blurPasses int, zoomFactor float32,
-	configs []Config, attractionTable [][]float32) *Model {
+	configs []*pb.AgentConfig, attractionTable [][]float32) *Model {
 
 	grids := make([]*Grid, len(configs))
 	numParticlesPerConfig := int(math.Ceil(
@@ -35,17 +38,26 @@ func NewModel(
 	actualNumParticles := numParticlesPerConfig * len(configs)
 	particles := make([]Particle, actualNumParticles)
 	m := &Model{
-		w, h, blurRadius, blurPasses, zoomFactor,
-		configs, attractionTable, grids, particles, 0}
+		w,
+		h,
+		blurRadius,
+		blurPasses,
+		zoomFactor,
+		configs,
+		attractionTable,
+		grids,
+		particles,
+		0,
+	}
 	m.StartOver()
 	return m
 }
 
 func (m *Model) StartOver() {
-	numParticlesPerConfig := len(m.Particles) / len(m.Configs)
+	numParticlesPerConfig := len(m.Particles) / len(m.AgentConfigs)
 	m.Particles = m.Particles[:0]
 	m.Iteration = 0
-	for c := range m.Configs {
+	for c := range m.AgentConfigs {
 		m.Grids[c] = NewGrid(m.W, m.H)
 		for i := 0; i < numParticlesPerConfig; i++ {
 			x := rand.Float32() * float32(m.W)
@@ -60,7 +72,7 @@ func (m *Model) StartOver() {
 func (m *Model) Step() {
 	updateParticle := func(rnd *rand.Rand, i int) {
 		p := m.Particles[i]
-		config := m.Configs[p.C]
+		config := m.AgentConfigs[p.C]
 		grid := m.Grids[p.C]
 
 		// u := p.X / float32(m.W)
@@ -106,7 +118,7 @@ func (m *Model) Step() {
 	}
 
 	updateGrids := func(c int, wg *sync.WaitGroup) {
-		config := m.Configs[c]
+		config := m.AgentConfigs[c]
 		grid := m.Grids[c]
 		for _, p := range m.Particles {
 			if uint32(c) == p.C {
@@ -134,7 +146,7 @@ func (m *Model) Step() {
 	var wg sync.WaitGroup
 
 	// step 1: combine grids
-	for i := range m.Configs {
+	for i := range m.AgentConfigs {
 		wg.Add(1)
 		go combineGrids(i, &wg)
 	}
@@ -149,7 +161,7 @@ func (m *Model) Step() {
 	wg.Wait()
 
 	// step 3: deposit, blur, and decay
-	for i := range m.Configs {
+	for i := range m.AgentConfigs {
 		wg.Add(1)
 		go updateGrids(i, &wg)
 	}
@@ -165,6 +177,16 @@ func (m *Model) Data() [][]float32 {
 		copy(result[i], grid.Data)
 	}
 	return result
+}
+
+func (m *Model) Palette() Palette {
+	p := make([]color.RGBA, len(m.AgentConfigs))
+	for i, ac := range m.AgentConfigs {
+		c, _ := colorful.Hex(ac.Color)
+		r, g, b, a := c.RGBA()
+		p[i] = color.RGBA{R: uint8(r), G: uint8(g), B: uint8(b), A: uint8(a)}
+	}
+	return p
 }
 
 func direction(rnd *rand.Rand, C, L, R float32) float32 {

@@ -28,8 +28,8 @@ func one(model *Model, iterations int) {
 	fmt.Println()
 	fmt.Println(dir)
 	fmt.Println(len(model.Particles), "particles")
-	PrintConfigs(model.Configs, model.AttractionTable)
-	SummarizeConfigs(model.Configs)
+	PrintConfigs(model.AgentConfigs, model.AttractionTable)
+	SummarizeConfigs(model.AgentConfigs)
 	palette := RandomPalette()
 	for i := 0; i < iterations; i++ {
 		model.Step()
@@ -85,7 +85,7 @@ func frames(model *Model, rate int) {
 func Run() {
 	if false {
 		n := 2 + rand.Intn(4)
-		configs := RandomConfigs(n)
+		configs := RandomAgentConfigs(n)
 		table := RandomAttractionTable(n)
 		model := NewModel(
 			width, height, particles, blurRadius, blurPasses, zoomFactor,
@@ -94,7 +94,7 @@ func Run() {
 	}
 
 	n := 2 + rand.Intn(4)
-	configs := RandomConfigs(n)
+	configs := RandomAgentConfigs(n)
 	table := RandomAttractionTable(n)
 	model := NewModel(
 		width, height, particles, blurRadius, blurPasses, zoomFactor,
