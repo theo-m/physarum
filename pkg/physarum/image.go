@@ -25,7 +25,7 @@ func makeGammaLookupTable(gamma float32) func(t float32) float32 {
 
 var lookup = makeGammaLookupTable(1 / 2.2)
 
-func Image(w, h int, grids [][]float32, palette Palette, min, max, gamma float32) image.Image {
+func Image(w, h int, grids [][]float32, palette []color.RGBA, min, max, gamma float32) image.Image {
 	im := image.NewRGBA(image.Rect(0, 0, w, h))
 
 	minValues := make([]float32, len(grids))

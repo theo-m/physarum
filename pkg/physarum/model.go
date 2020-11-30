@@ -179,7 +179,7 @@ func (m *Model) Data() [][]float32 {
 	return result
 }
 
-func (m *Model) Palette() Palette {
+func (m *Model) Palette() []color.RGBA {
 	p := make([]color.RGBA, len(m.AgentConfigs))
 	for i, ac := range m.AgentConfigs {
 		c, _ := colorful.Hex(ac.Color)

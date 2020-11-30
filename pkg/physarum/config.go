@@ -1,7 +1,6 @@
 package physarum
 
 import (
-	"fmt"
 	"math/rand"
 
 	"github.com/lucasb-eyer/go-colorful"
@@ -78,64 +77,6 @@ func RandomAttractionTable(n int) [][]float32 {
 		}
 	}
 	return result
-}
-
-func PrintConfigs(configs []*pb.AgentConfig, table [][]float32) {
-	fmt.Println("configs = []Config{")
-	for _, c := range configs {
-		fmt.Printf("\tConfig{%v, %v, %v, %v, %v, %v},\n",
-			c.SensorAngle,
-			c.SensorDistance,
-			c.RotationAngle,
-			c.StepDistance,
-			c.DepositionAmount,
-			c.DecayFactor)
-	}
-	fmt.Println("}")
-	fmt.Println("table = [][]float32{")
-	for _, row := range table {
-		fmt.Printf("\t{")
-		for i, value := range row {
-			if i > 0 {
-				fmt.Printf(", ")
-			}
-			fmt.Printf("%v", value)
-		}
-		fmt.Println("},")
-	}
-	fmt.Println("}")
-}
-
-func SummarizeConfigs(configs []*pb.AgentConfig) {
-	summarize := func(name string, getter func(i int) float32) {
-		fmt.Printf("%s ", name)
-		for i := 0; i < 18-len(name); i++ {
-			fmt.Printf(".")
-		}
-		for i := range configs {
-			if i != 0 {
-				fmt.Printf(",")
-			}
-			fmt.Printf("% 8.3f", getter(i))
-		}
-		fmt.Printf("\n")
-	}
-
-	summarize("StepDistance", func(i int) float32 {
-		return configs[i].StepDistance
-	})
-	summarize("SensorDistance", func(i int) float32 {
-		return configs[i].SensorDistance
-	})
-	summarize("SensorAngle", func(i int) float32 {
-		return Degrees(configs[i].SensorAngle)
-	})
-	summarize("RotationAngle", func(i int) float32 {
-		return Degrees(configs[i].RotationAngle)
-	})
-	summarize("DecayFactor", func(i int) float32 {
-		return configs[i].DecayFactor
-	})
 }
 
 func RandomConfig() *pb.Config {
