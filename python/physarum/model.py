@@ -75,6 +75,7 @@ def randomCfg() -> Config:
 
 class Physarum:
     cfg: Config
+    device: str
 
     s: int  # nb of species
     n: int  # nb of particles
@@ -90,14 +91,16 @@ class Physarum:
     step_distances: torch.Tensor  # [n]
     deposits: torch.Tensor  # [s]
     decay_factors: torch.Tensor  # [s]
+    idxs: torch.Tensor # [n]
 
     gaussian_blur: torch.Tensor
     box_blur: torch.Tensor
 
     @classmethod
-    def from_config(cls, cfg: Config):
+    def from_config(cls, cfg: Config, device: str):
         inst = cls()
         inst.cfg = cfg
+        inst.device = device
         # todo: change config to avoid assert, ask directly pop size
         n, s = cfg.particles, len(cfg.agents)
         w, h = cfg.width, cfg.height
@@ -106,31 +109,32 @@ class Physarum:
         assert len(cfg.interaction_matrix) == s ** 2
         assert n % s == 0
 
-        inst.interact = torch.tensor(cfg.interaction_matrix).view(s, s)
+        inst.interact = torch.tensor(cfg.interaction_matrix, device=device).view(s, s)
 
         # todo
         # if cfg.idist == Config.InitDistribution.UNIFORM:
-        inst.particles = torch.rand((n, 3)) * torch.tensor((w, h, 2 * math.pi))
-        inst.grids = torch.rand((s, w, h))
+        inst.particles = torch.rand((n, 3), device=device) * torch.tensor((w, h, 2 * math.pi), device=device)
+        inst.grids = torch.rand((s, w, h), device=device)
 
         def build_tensor(attr):
-            ts = [torch.tensor([getattr(a, attr)] * c) for a in cfg.agents]
+            ts = [torch.tensor([getattr(a, attr)] * c, device=device) for a in cfg.agents]
             return torch.cat(ts)
 
         inst.sensor_angles = build_tensor("sensor_angle")
         inst.sensor_distances = build_tensor("sensor_distance")
         inst.rotation_angles = build_tensor("rotation_angle")
         inst.step_distances = build_tensor("step_distance")
+        inst.idxs = torch.arange(n, device=device) // c
 
-        inst.deposits = torch.tensor([a.deposition_amount for a in cfg.agents])
-        inst.decay_factors = torch.tensor([a.decay_factor for a in cfg.agents])
+        inst.deposits = torch.tensor([a.deposition_amount for a in cfg.agents], device=device)
+        inst.decay_factors = torch.tensor([a.decay_factor for a in cfg.agents], device=device)
 
         r = 2 * cfg.blur_radius + 1
         sigma = 1
-        gaussian1d = (-((torch.arange(r).float() - r // 2) ** 2) / sigma).exp().view(-1, 1)
+        gaussian1d = (-((torch.arange(r, device=device).float() - r // 2) ** 2) / sigma).exp().view(-1, 1)
         gaussian2d = gaussian1d.mm(gaussian1d.t())
         inst.gaussian_blur = gaussian2d.view(1, 1, r, r).repeat(s, 1, 1, 1)
-        inst.box_blur = torch.ones(s, 1, r, r) / (r ** 2)
+        inst.box_blur = torch.ones(s, 1, r, r, device=device) / (r ** 2)
 
         inst.c = c
         inst.n = n
@@ -154,14 +158,13 @@ class Physarum:
         ry = (y + (a + self.sensor_angles).sin() * self.sensor_distances).to(int).clamp(0, self.cfg.height - 1)
         right_move = torch.stack((rx, ry))  # [n, 2]
 
-        idxs = torch.arange(self.n) // self.c
         scores = []
         for moveset in [center_move, left_move, right_move]:
-            i, j, k = torch.cat((idxs.view(1, -1), moveset), 0)
+            i, j, k = torch.cat((self.idxs.view(1, -1), moveset), 0)
             s = comb_grids[i, j, k]
             scores.append(s)
         c, l, r = scores
-        directions = self.rotation_angles * torch.randint(0, 2, (self.n,))
+        directions = self.rotation_angles * torch.randint(0, 2, (self.n,), device=self.device)
         directions[(c > l).bitwise_and(c > r)] = 0
         directions[l < r] = 1
         directions[r < l] = -1
@@ -176,9 +179,8 @@ class Physarum:
         ).t()
 
         # 3. deposit, decay + blur
-        g, x, y, _ = torch.cat((idxs.view(-1, 1), self.particles.to(int)), 1).t()
+        g, x, y, _ = torch.cat((self.idxs.view(-1, 1), self.particles.to(int)), 1).t()
         self.grids[g, x, y] += self.deposits[g]
-        # self.grids = self.blur(self.grids)
         self.grids = F.conv2d(
             self.grids.unsqueeze(0),
             self.gaussian_blur,
@@ -189,8 +191,8 @@ class Physarum:
         self.grids *= self.decay_factors.view(-1, 1, 1)
 
     def img(self) -> torch.Tensor:
-        maxs = torch.tensor([m.quantile(0.99) for m in self.grids]).view(-1, 1, 1)
-        r = torch.zeros((self.cfg.width, self.cfg.height))
+        maxs = torch.tensor([m.quantile(0.99) for m in self.grids], device=self.device).view(-1, 1, 1)
+        r = torch.zeros((self.cfg.width, self.cfg.height), device=self.device)
         g, b = r.clone(), r.clone()
         normGrids = (self.grids / maxs).clamp(0, 1) ** 0.454
         for i, a in enumerate(self.cfg.agents):
@@ -219,7 +221,7 @@ if __name__ == "__main__":
     dirr.mkdir()
 
     cfg = randomCfg()
-    p = Physarum.from_config(cfg)
+    p = Physarum.from_config(cfg, "cpu")
     print(p.cfg)
     for i in range(cfg.iterations):
         print(f"\r{i:5d}/{cfg.iterations}", end="")

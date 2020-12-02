@@ -29,6 +29,9 @@ class MainHandler(tornado.web.RequestHandler):
 
 
 class WSHandler(tornado.websocket.WebSocketHandler):
+    def initialize(self, device: str):
+        self.device = device
+
     def open(self):
         pass
 
@@ -41,7 +44,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         m = -torch.ones(n, n) + 2 * torch.eye(n) + torch.randn((n, n))
         cfg.interaction_matrix.extend(m.view(-1).tolist())
 
-        model = Physarum.from_config(cfg)
+        model = Physarum.from_config(cfg, self.device)
         mname = int(time.time())
         mdir = Path(f"out/{mname}")
         mdir.mkdir()
@@ -76,17 +79,24 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         return
 
 
-def make_app():
+def make_app(device: str):
     return tornado.web.Application(
         [
             (r"/", MainHandler),
-            (r"/ws", WSHandler),
+            (r"/ws", WSHandler, {"device": device}),
             (r"/public/(.*)", tornado.web.StaticFileHandler, {"path": "./public"}),
         ]
     )
 
 
 if __name__ == "__main__":
-    app = make_app()
-    app.listen(8988)
+    import argparse
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-p", type=int, default=8080)
+    ap.add_argument("-d", choices=["cpu", "cuda"], default="cpu")
+    args = ap.parse_args()
+
+    app = make_app(args.d)
+    app.listen(args.p)
     tornado.ioloop.IOLoop.current().start()
