@@ -14,6 +14,7 @@ var global = Function('return this')();
 
 goog.exportSymbol('proto.physarium.AgentConfig', null, global);
 goog.exportSymbol('proto.physarium.Config', null, global);
+goog.exportSymbol('proto.physarium.Config.DecayTypeCase', null, global);
 goog.exportSymbol('proto.physarium.Config.InitDistribution', null, global);
 goog.exportSymbol('proto.physarium.Event', null, global);
 goog.exportSymbol('proto.physarium.Event.ContentCase', null, global);
@@ -28,7 +29,7 @@ goog.exportSymbol('proto.physarium.Event.ContentCase', null, global);
  * @constructor
  */
 proto.physarium.Config = function(opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, proto.physarium.Config.repeatedFields_, null);
+  jspb.Message.initialize(this, opt_data, 0, -1, proto.physarium.Config.repeatedFields_, proto.physarium.Config.oneofGroups_);
 };
 goog.inherits(proto.physarium.Config, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
@@ -88,6 +89,32 @@ if (goog.DEBUG && !COMPILED) {
  */
 proto.physarium.Config.repeatedFields_ = [9,10];
 
+/**
+ * Oneof group definitions for this message. Each group defines the field
+ * numbers belonging to that group. When of these fields' value is set, all
+ * other fields in the group are cleared. During deserialization, if multiple
+ * fields are encountered for a group, only the last value seen will be kept.
+ * @private {!Array<!Array<number>>}
+ * @const
+ */
+proto.physarium.Config.oneofGroups_ = [[12,13]];
+
+/**
+ * @enum {number}
+ */
+proto.physarium.Config.DecayTypeCase = {
+  DECAY_TYPE_NOT_SET: 0,
+  GAUSSIAN_SIGMA: 12,
+  BOX: 13
+};
+
+/**
+ * @return {proto.physarium.Config.DecayTypeCase}
+ */
+proto.physarium.Config.prototype.getDecayTypeCase = function() {
+  return /** @type {proto.physarium.Config.DecayTypeCase} */(jspb.Message.computeOneofCase(this, proto.physarium.Config.oneofGroups_[0]));
+};
+
 
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -126,10 +153,13 @@ proto.physarium.Config.toObject = function(includeInstance, msg) {
     blurRadius: jspb.Message.getFieldWithDefault(msg, 5, 0),
     blurPasses: jspb.Message.getFieldWithDefault(msg, 6, 0),
     zoomFactor: jspb.Message.getFloatingPointFieldWithDefault(msg, 7, 0.0),
+    gamma: jspb.Message.getFloatingPointFieldWithDefault(msg, 8, 0.0),
     agentsList: jspb.Message.toObjectList(msg.getAgentsList(),
     proto.physarium.AgentConfig.toObject, includeInstance),
     interactionMatrixList: (f = jspb.Message.getRepeatedFloatingPointField(msg, 10)) == null ? undefined : f,
-    idist: jspb.Message.getFieldWithDefault(msg, 11, 0)
+    idist: jspb.Message.getFieldWithDefault(msg, 11, 0),
+    gaussianSigma: jspb.Message.getFloatingPointFieldWithDefault(msg, 12, 0.0),
+    box: jspb.Message.getFloatingPointFieldWithDefault(msg, 13, 0.0)
   };
 
   if (includeInstance) {
@@ -194,6 +224,10 @@ proto.physarium.Config.deserializeBinaryFromReader = function(msg, reader) {
       var value = /** @type {number} */ (reader.readFloat());
       msg.setZoomFactor(value);
       break;
+    case 8:
+      var value = /** @type {number} */ (reader.readFloat());
+      msg.setGamma(value);
+      break;
     case 9:
       var value = new proto.physarium.AgentConfig;
       reader.readMessage(value,proto.physarium.AgentConfig.deserializeBinaryFromReader);
@@ -206,6 +240,14 @@ proto.physarium.Config.deserializeBinaryFromReader = function(msg, reader) {
     case 11:
       var value = /** @type {!proto.physarium.Config.InitDistribution} */ (reader.readEnum());
       msg.setIdist(value);
+      break;
+    case 12:
+      var value = /** @type {number} */ (reader.readFloat());
+      msg.setGaussianSigma(value);
+      break;
+    case 13:
+      var value = /** @type {number} */ (reader.readFloat());
+      msg.setBox(value);
       break;
     default:
       reader.skipField();
@@ -285,6 +327,13 @@ proto.physarium.Config.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
+  f = message.getGamma();
+  if (f !== 0.0) {
+    writer.writeFloat(
+      8,
+      f
+    );
+  }
   f = message.getAgentsList();
   if (f.length > 0) {
     writer.writeRepeatedMessage(
@@ -304,6 +353,20 @@ proto.physarium.Config.serializeBinaryToWriter = function(message, writer) {
   if (f !== 0.0) {
     writer.writeEnum(
       11,
+      f
+    );
+  }
+  f = /** @type {number} */ (jspb.Message.getField(message, 12));
+  if (f != null) {
+    writer.writeFloat(
+      12,
+      f
+    );
+  }
+  f = /** @type {number} */ (jspb.Message.getField(message, 13));
+  if (f != null) {
+    writer.writeFloat(
+      13,
       f
     );
   }
@@ -448,6 +511,24 @@ proto.physarium.Config.prototype.setZoomFactor = function(value) {
 
 
 /**
+ * optional float gamma = 8;
+ * @return {number}
+ */
+proto.physarium.Config.prototype.getGamma = function() {
+  return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 8, 0.0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.physarium.Config} returns this
+ */
+proto.physarium.Config.prototype.setGamma = function(value) {
+  return jspb.Message.setProto3FloatField(this, 8, value);
+};
+
+
+/**
  * repeated AgentConfig agents = 9;
  * @return {!Array<!proto.physarium.AgentConfig>}
  */
@@ -537,6 +618,78 @@ proto.physarium.Config.prototype.getIdist = function() {
  */
 proto.physarium.Config.prototype.setIdist = function(value) {
   return jspb.Message.setProto3EnumField(this, 11, value);
+};
+
+
+/**
+ * optional float gaussian_sigma = 12;
+ * @return {number}
+ */
+proto.physarium.Config.prototype.getGaussianSigma = function() {
+  return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 12, 0.0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.physarium.Config} returns this
+ */
+proto.physarium.Config.prototype.setGaussianSigma = function(value) {
+  return jspb.Message.setOneofField(this, 12, proto.physarium.Config.oneofGroups_[0], value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.physarium.Config} returns this
+ */
+proto.physarium.Config.prototype.clearGaussianSigma = function() {
+  return jspb.Message.setOneofField(this, 12, proto.physarium.Config.oneofGroups_[0], undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.physarium.Config.prototype.hasGaussianSigma = function() {
+  return jspb.Message.getField(this, 12) != null;
+};
+
+
+/**
+ * optional float box = 13;
+ * @return {number}
+ */
+proto.physarium.Config.prototype.getBox = function() {
+  return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 13, 0.0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.physarium.Config} returns this
+ */
+proto.physarium.Config.prototype.setBox = function(value) {
+  return jspb.Message.setOneofField(this, 13, proto.physarium.Config.oneofGroups_[0], value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.physarium.Config} returns this
+ */
+proto.physarium.Config.prototype.clearBox = function() {
+  return jspb.Message.setOneofField(this, 13, proto.physarium.Config.oneofGroups_[0], undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.physarium.Config.prototype.hasBox = function() {
+  return jspb.Message.getField(this, 13) != null;
 };
 
 
@@ -859,7 +1012,7 @@ proto.physarium.AgentConfig.prototype.setColor = function(value) {
  * @private {!Array<!Array<number>>}
  * @const
  */
-proto.physarium.Event.oneofGroups_ = [[1,2,3]];
+proto.physarium.Event.oneofGroups_ = [[1,2,3,4]];
 
 /**
  * @enum {number}
@@ -868,7 +1021,8 @@ proto.physarium.Event.ContentCase = {
   CONTENT_NOT_SET: 0,
   PICTURE: 1,
   VIDEO: 2,
-  STEP: 3
+  STEP: 3,
+  MODEL_ID: 4
 };
 
 /**
@@ -911,7 +1065,8 @@ proto.physarium.Event.toObject = function(includeInstance, msg) {
   var f, obj = {
     picture: msg.getPicture_asB64(),
     video: msg.getVideo_asB64(),
-    step: jspb.Message.getFieldWithDefault(msg, 3, "")
+    step: jspb.Message.getFieldWithDefault(msg, 3, ""),
+    modelId: jspb.Message.getFieldWithDefault(msg, 4, "")
   };
 
   if (includeInstance) {
@@ -960,6 +1115,10 @@ proto.physarium.Event.deserializeBinaryFromReader = function(msg, reader) {
       var value = /** @type {string} */ (reader.readString());
       msg.setStep(value);
       break;
+    case 4:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setModelId(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1007,6 +1166,13 @@ proto.physarium.Event.serializeBinaryToWriter = function(message, writer) {
   if (f != null) {
     writer.writeString(
       3,
+      f
+    );
+  }
+  f = /** @type {string} */ (jspb.Message.getField(message, 4));
+  if (f != null) {
+    writer.writeString(
+      4,
       f
     );
   }
@@ -1166,6 +1332,42 @@ proto.physarium.Event.prototype.clearStep = function() {
  */
 proto.physarium.Event.prototype.hasStep = function() {
   return jspb.Message.getField(this, 3) != null;
+};
+
+
+/**
+ * optional string model_id = 4;
+ * @return {string}
+ */
+proto.physarium.Event.prototype.getModelId = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.physarium.Event} returns this
+ */
+proto.physarium.Event.prototype.setModelId = function(value) {
+  return jspb.Message.setOneofField(this, 4, proto.physarium.Event.oneofGroups_[0], value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.physarium.Event} returns this
+ */
+proto.physarium.Event.prototype.clearModelId = function() {
+  return jspb.Message.setOneofField(this, 4, proto.physarium.Event.oneofGroups_[0], undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.physarium.Event.prototype.hasModelId = function() {
+  return jspb.Message.getField(this, 4) != null;
 };
 
 

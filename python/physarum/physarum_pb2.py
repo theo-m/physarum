@@ -18,7 +18,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='physarium',
   syntax='proto3',
   serialized_options=b'Z\036github.com/theo-m/physarium/pb',
-  serialized_pb=b'\n\x0ephysarum.proto\x12\tphysarium\"\xd3\x02\n\x06\x43onfig\x12\r\n\x05width\x18\x01 \x01(\x05\x12\x0e\n\x06height\x18\x02 \x01(\x05\x12\x11\n\tparticles\x18\x03 \x01(\x03\x12\x12\n\niterations\x18\x04 \x01(\x05\x12\x13\n\x0b\x62lur_radius\x18\x05 \x01(\x05\x12\x13\n\x0b\x62lur_passes\x18\x06 \x01(\x05\x12\x13\n\x0bzoom_factor\x18\x07 \x01(\x02\x12&\n\x06\x61gents\x18\t \x03(\x0b\x32\x16.physarium.AgentConfig\x12\x1a\n\x12interaction_matrix\x18\n \x03(\x02\x12\x31\n\x05idist\x18\x0b \x01(\x0e\x32\".physarium.Config.InitDistribution\"M\n\x10InitDistribution\x12\x07\n\x03UNK\x10\x00\x12\x0b\n\x07UNIFORM\x10\x01\x12\r\n\tCENTROIDS\x10\x02\x12\n\n\x06\x43\x45NTRE\x10\x03\x12\x08\n\x04GRID\x10\x04\"\xab\x01\n\x0b\x41gentConfig\x12\x14\n\x0csensor_angle\x18\x01 \x01(\x02\x12\x17\n\x0fsensor_distance\x18\x02 \x01(\x02\x12\x16\n\x0erotation_angle\x18\x03 \x01(\x02\x12\x15\n\rstep_distance\x18\x04 \x01(\x02\x12\x19\n\x11\x64\x65position_amount\x18\x05 \x01(\x02\x12\x14\n\x0c\x64\x65\x63\x61y_factor\x18\x06 \x01(\x02\x12\r\n\x05\x63olor\x18\x07 \x01(\t\"F\n\x05\x45vent\x12\x11\n\x07picture\x18\x01 \x01(\x0cH\x00\x12\x0f\n\x05video\x18\x02 \x01(\x0cH\x00\x12\x0e\n\x04step\x18\x03 \x01(\tH\x00\x42\t\n\x07\x63ontentB Z\x1egithub.com/theo-m/physarium/pbb\x06proto3'
+  serialized_pb=b'\n\x0ephysarum.proto\x12\tphysarium\"\x99\x03\n\x06\x43onfig\x12\r\n\x05width\x18\x01 \x01(\x05\x12\x0e\n\x06height\x18\x02 \x01(\x05\x12\x11\n\tparticles\x18\x03 \x01(\x03\x12\x12\n\niterations\x18\x04 \x01(\x05\x12\x13\n\x0b\x62lur_radius\x18\x05 \x01(\x05\x12\x13\n\x0b\x62lur_passes\x18\x06 \x01(\x05\x12\x13\n\x0bzoom_factor\x18\x07 \x01(\x02\x12\r\n\x05gamma\x18\x08 \x01(\x02\x12&\n\x06\x61gents\x18\t \x03(\x0b\x32\x16.physarium.AgentConfig\x12\x1a\n\x12interaction_matrix\x18\n \x03(\x02\x12\x31\n\x05idist\x18\x0b \x01(\x0e\x32\".physarium.Config.InitDistribution\x12\x18\n\x0egaussian_sigma\x18\x0c \x01(\x02H\x00\x12\r\n\x03\x62ox\x18\r \x01(\x02H\x00\"M\n\x10InitDistribution\x12\x07\n\x03UNK\x10\x00\x12\x0b\n\x07UNIFORM\x10\x01\x12\r\n\tCENTROIDS\x10\x02\x12\n\n\x06\x43\x45NTRE\x10\x03\x12\x08\n\x04GRID\x10\x04\x42\x0c\n\ndecay_type\"\xab\x01\n\x0b\x41gentConfig\x12\x14\n\x0csensor_angle\x18\x01 \x01(\x02\x12\x17\n\x0fsensor_distance\x18\x02 \x01(\x02\x12\x16\n\x0erotation_angle\x18\x03 \x01(\x02\x12\x15\n\rstep_distance\x18\x04 \x01(\x02\x12\x19\n\x11\x64\x65position_amount\x18\x05 \x01(\x02\x12\x14\n\x0c\x64\x65\x63\x61y_factor\x18\x06 \x01(\x02\x12\r\n\x05\x63olor\x18\x07 \x01(\t\"Z\n\x05\x45vent\x12\x11\n\x07picture\x18\x01 \x01(\x0cH\x00\x12\x0f\n\x05video\x18\x02 \x01(\x0cH\x00\x12\x0e\n\x04step\x18\x03 \x01(\tH\x00\x12\x12\n\x08model_id\x18\x04 \x01(\tH\x00\x42\t\n\x07\x63ontentB Z\x1egithub.com/theo-m/physarium/pbb\x06proto3'
 )
 
 
@@ -52,8 +52,8 @@ _CONFIG_INITDISTRIBUTION = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=292,
-  serialized_end=369,
+  serialized_start=348,
+  serialized_end=425,
 )
 _sym_db.RegisterEnumDescriptor(_CONFIG_INITDISTRIBUTION)
 
@@ -115,23 +115,44 @@ _CONFIG = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='agents', full_name='physarium.Config.agents', index=7,
+      name='gamma', full_name='physarium.Config.gamma', index=7,
+      number=8, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='agents', full_name='physarium.Config.agents', index=8,
       number=9, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='interaction_matrix', full_name='physarium.Config.interaction_matrix', index=8,
+      name='interaction_matrix', full_name='physarium.Config.interaction_matrix', index=9,
       number=10, type=2, cpp_type=6, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='idist', full_name='physarium.Config.idist', index=9,
+      name='idist', full_name='physarium.Config.idist', index=10,
       number=11, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='gaussian_sigma', full_name='physarium.Config.gaussian_sigma', index=11,
+      number=12, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='box', full_name='physarium.Config.box', index=12,
+      number=13, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
@@ -147,9 +168,12 @@ _CONFIG = _descriptor.Descriptor(
   syntax='proto3',
   extension_ranges=[],
   oneofs=[
+    _descriptor.OneofDescriptor(
+      name='decay_type', full_name='physarium.Config.decay_type',
+      index=0, containing_type=None, fields=[]),
   ],
   serialized_start=30,
-  serialized_end=369,
+  serialized_end=439,
 )
 
 
@@ -221,8 +245,8 @@ _AGENTCONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=372,
-  serialized_end=543,
+  serialized_start=442,
+  serialized_end=613,
 )
 
 
@@ -254,6 +278,13 @@ _EVENT = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='model_id', full_name='physarium.Event.model_id', index=3,
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -269,13 +300,19 @@ _EVENT = _descriptor.Descriptor(
       name='content', full_name='physarium.Event.content',
       index=0, containing_type=None, fields=[]),
   ],
-  serialized_start=545,
-  serialized_end=615,
+  serialized_start=615,
+  serialized_end=705,
 )
 
 _CONFIG.fields_by_name['agents'].message_type = _AGENTCONFIG
 _CONFIG.fields_by_name['idist'].enum_type = _CONFIG_INITDISTRIBUTION
 _CONFIG_INITDISTRIBUTION.containing_type = _CONFIG
+_CONFIG.oneofs_by_name['decay_type'].fields.append(
+  _CONFIG.fields_by_name['gaussian_sigma'])
+_CONFIG.fields_by_name['gaussian_sigma'].containing_oneof = _CONFIG.oneofs_by_name['decay_type']
+_CONFIG.oneofs_by_name['decay_type'].fields.append(
+  _CONFIG.fields_by_name['box'])
+_CONFIG.fields_by_name['box'].containing_oneof = _CONFIG.oneofs_by_name['decay_type']
 _EVENT.oneofs_by_name['content'].fields.append(
   _EVENT.fields_by_name['picture'])
 _EVENT.fields_by_name['picture'].containing_oneof = _EVENT.oneofs_by_name['content']
@@ -285,6 +322,9 @@ _EVENT.fields_by_name['video'].containing_oneof = _EVENT.oneofs_by_name['content
 _EVENT.oneofs_by_name['content'].fields.append(
   _EVENT.fields_by_name['step'])
 _EVENT.fields_by_name['step'].containing_oneof = _EVENT.oneofs_by_name['content']
+_EVENT.oneofs_by_name['content'].fields.append(
+  _EVENT.fields_by_name['model_id'])
+_EVENT.fields_by_name['model_id'].containing_oneof = _EVENT.oneofs_by_name['content']
 DESCRIPTOR.message_types_by_name['Config'] = _CONFIG
 DESCRIPTOR.message_types_by_name['AgentConfig'] = _AGENTCONFIG
 DESCRIPTOR.message_types_by_name['Event'] = _EVENT

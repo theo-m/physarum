@@ -9,7 +9,7 @@ catch() {
 go generate
 
 pushd js
-./node_modules/webpack-cli/bin/cli.js && mv bundle.js ../public
+./node_modules/webpack-cli/bin/cli.js
 popd
 
 # https://github.com/hashicorp/vault/issues/3417

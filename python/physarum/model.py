@@ -18,6 +18,14 @@ print(f"seed: {seed}")
 torch.manual_seed(seed)
 
 
+def gauss(w: int, h: int, cx: float, cy: float, sx: float, sy: float) -> torch.Tensor:
+    x = torch.arange(w) - w / 2
+    y = torch.arange(h) - h / 2
+    gx = (-((x - cx) ** 2) / sx).exp().view(-1, 1)
+    gy = (-((y - cy) ** 2) / sy).exp().view(-1, 1)
+    return gx.mm(gy.t())
+
+
 def randomCfg() -> Config:
     colors = [
         "#68bee5",
@@ -39,6 +47,8 @@ def randomCfg() -> Config:
     cfg.blur_radius = 3
     cfg.blur_passes = 1
     cfg.zoom_factor = 1
+    cfg.gamma = 0.454
+    cfg.gaussian_sigma = 2
 
     def unif(a, b):
         return a + (b - a) * torch.rand((n_species,))
@@ -91,10 +101,9 @@ class Physarum:
     step_distances: torch.Tensor  # [n]
     deposits: torch.Tensor  # [s]
     decay_factors: torch.Tensor  # [s]
-    idxs: torch.Tensor # [n]
+    idxs: torch.Tensor  # [n]
 
-    gaussian_blur: torch.Tensor
-    box_blur: torch.Tensor
+    blur_kernel: torch.Tensor
 
     @classmethod
     def from_config(cls, cfg: Config, device: str):
@@ -111,30 +120,43 @@ class Physarum:
 
         inst.interact = torch.tensor(cfg.interaction_matrix, device=device).view(s, s)
 
-        # todo
-        # if cfg.idist == Config.InitDistribution.UNIFORM:
-        inst.particles = torch.rand((n, 3), device=device) * torch.tensor((w, h, 2 * math.pi), device=device)
-        inst.grids = torch.rand((s, w, h), device=device)
+        inst.grids = torch.zeros(s, h, w, device=device)
+        if cfg.idist == Config.InitDistribution.UNIFORM:
+            inst.particles = torch.rand((n, 3), device=device) * torch.tensor((h, w, 2 * math.pi), device=device)
+        elif cfg.idist == Config.InitDistribution.CENTRE:
+            xys = torch.tensor([[h / 2, w / 2]]) + torch.randn((n, 2), device=device) * min(h, w) // 8
+            inst.particles = torch.cat((xys, 2 * math.pi * torch.rand((n, 1))), 1)
+        elif cfg.idist == Config.InitDistribution.CENTROIDS:
+            cc = []
+            for _ in range(s):
+                ctr = torch.tensor([[h, w]]) * torch.rand((1, 2))
+                xys = ctr + torch.randn((c, 2)) * min(h, w) // random.randint(8, 16)
+                ps = torch.cat((xys, 2 * math.pi * torch.rand((c, 1))), 1)
+                cc.append(ps)
+            inst.particles = torch.cat(cc, 0)
 
         def build_tensor(attr):
             ts = [torch.tensor([getattr(a, attr)] * c, device=device) for a in cfg.agents]
             return torch.cat(ts)
 
         inst.sensor_angles = build_tensor("sensor_angle")
-        inst.sensor_distances = build_tensor("sensor_distance")
+        inst.sensor_distances = build_tensor("sensor_distance") * cfg.zoom_factor
         inst.rotation_angles = build_tensor("rotation_angle")
-        inst.step_distances = build_tensor("step_distance")
+        inst.step_distances = build_tensor("step_distance") * cfg.zoom_factor
         inst.idxs = torch.arange(n, device=device) // c
 
         inst.deposits = torch.tensor([a.deposition_amount for a in cfg.agents], device=device)
         inst.decay_factors = torch.tensor([a.decay_factor for a in cfg.agents], device=device)
 
         r = 2 * cfg.blur_radius + 1
-        sigma = 1
-        gaussian1d = (-((torch.arange(r, device=device).float() - r // 2) ** 2) / sigma).exp().view(-1, 1)
-        gaussian2d = gaussian1d.mm(gaussian1d.t())
-        inst.gaussian_blur = gaussian2d.view(1, 1, r, r).repeat(s, 1, 1, 1)
-        inst.box_blur = torch.ones(s, 1, r, r, device=device) / (r ** 2)
+        if cfg.WhichOneof("decay_type") == "gaussian_sigma":
+            gaussian1d = (
+                (-((torch.arange(r, device=device).float() - r // 2) ** 2) / cfg.gaussian_sigma).exp().view(-1, 1)
+            )
+            gaussian2d = gaussian1d.mm(gaussian1d.t())
+            inst.blur_kernel = gaussian2d.view(1, 1, r, r).repeat(s, 1, 1, 1)
+        elif cfg.WhichOneof("decay_type") == "box":
+            inst.blur_kernel = torch.ones(s, 1, r, r, device=device) / (r ** 2)
 
         inst.c = c
         inst.n = n
@@ -148,14 +170,14 @@ class Physarum:
 
         # 2. move particles
         x, y, a = self.particles.t()
-        cx = (x + a.cos() * self.sensor_distances).to(int).clamp(0, self.cfg.width - 1)
-        cy = (y + a.sin() * self.sensor_distances).to(int).clamp(0, self.cfg.height - 1)
+        cx = (x + a.cos() * self.sensor_distances).to(int).clamp(0, self.cfg.height - 1)
+        cy = (y + a.sin() * self.sensor_distances).to(int).clamp(0, self.cfg.width - 1)
         center_move = torch.stack((cx, cy))  # [n, 2]
-        lx = (x + (a - self.sensor_angles).cos() * self.sensor_distances).to(int).clamp(0, self.cfg.width - 1)
-        ly = (y + (a - self.sensor_angles).sin() * self.sensor_distances).to(int).clamp(0, self.cfg.height - 1)
+        lx = (x + (a - self.sensor_angles).cos() * self.sensor_distances).to(int).clamp(0, self.cfg.height - 1)
+        ly = (y + (a - self.sensor_angles).sin() * self.sensor_distances).to(int).clamp(0, self.cfg.width - 1)
         left_move = torch.stack((lx, ly))  # [n, 2]
-        rx = (x + (a + self.sensor_angles).cos() * self.sensor_distances).to(int).clamp(0, self.cfg.width - 1)
-        ry = (y + (a + self.sensor_angles).sin() * self.sensor_distances).to(int).clamp(0, self.cfg.height - 1)
+        rx = (x + (a + self.sensor_angles).cos() * self.sensor_distances).to(int).clamp(0, self.cfg.height - 1)
+        ry = (y + (a + self.sensor_angles).sin() * self.sensor_distances).to(int).clamp(0, self.cfg.width - 1)
         right_move = torch.stack((rx, ry))  # [n, 2]
 
         scores = []
@@ -172,8 +194,8 @@ class Physarum:
         new_a = a + directions
         self.particles = torch.stack(
             (
-                (x + new_a.cos() * self.step_distances).clamp(0, self.cfg.width - 1),
-                (y + new_a.sin() * self.step_distances).clamp(0, self.cfg.height - 1),
+                (x + new_a.cos() * self.step_distances).clamp(0, self.cfg.height - 1),
+                (y + new_a.sin() * self.step_distances).clamp(0, self.cfg.width - 1),
                 new_a,
             )
         ).t()
@@ -183,7 +205,7 @@ class Physarum:
         self.grids[g, x, y] += self.deposits[g]
         self.grids = F.conv2d(
             self.grids.unsqueeze(0),
-            self.gaussian_blur,
+            self.blur_kernel,
             stride=1,
             groups=self.s,
             padding=self.cfg.blur_radius,
@@ -192,9 +214,9 @@ class Physarum:
 
     def img(self) -> torch.Tensor:
         maxs = torch.tensor([m.quantile(0.99) for m in self.grids], device=self.device).view(-1, 1, 1)
-        r = torch.zeros((self.cfg.width, self.cfg.height), device=self.device)
+        r = torch.zeros((self.cfg.height, self.cfg.width), device=self.device)
         g, b = r.clone(), r.clone()
-        normGrids = (self.grids / maxs).clamp(0, 1) ** 0.454
+        normGrids = (self.grids / maxs).clamp(0, 1) ** self.cfg.gamma
         for i, a in enumerate(self.cfg.agents):
             c = colour.Color()
             c.set_hex(a.color)
@@ -203,9 +225,9 @@ class Physarum:
             b += int(255 * c.get_blue()) * normGrids[i]
         img = torch.stack(
             (
-                r.to(torch.uint8).clamp(0, 255),
-                g.to(torch.uint8).clamp(0, 255),
-                b.to(torch.uint8).clamp(0, 255),
+                r.clamp(0, 255).to(torch.uint8),
+                g.clamp(0, 255).to(torch.uint8),
+                b.clamp(0, 255).to(torch.uint8),
             )
         )
         return img
@@ -218,7 +240,7 @@ if __name__ == "__main__":
 
     t = int(time.time())
     dirr = Path(f"out/{t}")
-    dirr.mkdir()
+    dirr.mkdir(parents=True, exist_ok=False)
 
     cfg = randomCfg()
     p = Physarum.from_config(cfg, "cpu")

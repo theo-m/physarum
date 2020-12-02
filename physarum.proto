@@ -10,6 +10,7 @@ message Config {
   int32 blur_radius = 5;
   int32 blur_passes = 6;
   float zoom_factor = 7;
+  float gamma = 8;
   repeated AgentConfig agents = 9;
   repeated float interaction_matrix = 10;
   enum InitDistribution {
@@ -20,6 +21,10 @@ message Config {
     GRID = 4;
   }
   InitDistribution idist = 11;
+  oneof decay_type {
+    float gaussian_sigma = 12;
+    float box = 13;
+  }
 }
 
 message AgentConfig {
@@ -37,5 +42,6 @@ message Event {
     bytes picture = 1;
     bytes video = 2;
     string step = 3;
+    string model_id = 4;
   }
 }

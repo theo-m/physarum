@@ -1,0 +1,31 @@
+<html lang="en">
+  <head>
+    <title>Physarum</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css"
+    />
+  </head>
+  <body class="mx-auto h-full px-24">
+    <div class="flex flex-col flex-fill pb-24 space-y-4">
+      <div class="bg-grey-100 py-4 px-2 border-b flex space-x-4">
+        <span class="font-medium">Physarum</span>
+        <a href="/" class="text-gray-400">new</a>
+      </div>
+      <div class="flex flex-wrap">
+        {% for mid, img_src in sims %}
+        <div class="border p-4 flex flex-col">
+          <a href="/?from-config={{ mid }}">
+            <img
+              src="{{ img_src }}"
+              alt="{{ mid }}"
+              style="max-height: 100px; max-width: 100px"
+            />
+            <span class="text-gray-300">{{ mid }}</span>
+          </a>
+        </div>
+        {% end %}
+      </div>
+    </div>
+  </body>
+</html>
