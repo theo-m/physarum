@@ -3,3 +3,9 @@
 
 /js/node_modules/
 /.idea/
+/python/venv/lib/python3.7/
+/nohup.out
+/Untitled.ipynb
+/out/production/physarum/
+/.ipynb_checkpoints/
+/python/venv/

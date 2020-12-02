@@ -25,13 +25,9 @@ func NewGrid(w, h int) *Grid {
 }
 
 func (g *Grid) Index(x, y float32) int {
-	i := int(x+float32(g.W)) & (g.W - 1)
+	i := int(x+float32(g.W)) & (g.W - 1) // == x % g.W (cheap trick?)
 	j := int(y+float32(g.H)) & (g.H - 1)
 	return j*g.W + i
-}
-
-func (g *Grid) Get(x, y float32) float32 {
-	return g.Data[g.Index(x, y)]
 }
 
 func (g *Grid) GetTemp(x, y float32) float32 {

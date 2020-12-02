@@ -1,0 +1,285 @@
+<html lang="en">
+  <head>
+    <title>Physarum</title>
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+      integrity="sha256-4+XzXVhsDmqanXGHaHvgh1gMQKX40OUvDEBTu8JcmNs="
+      crossorigin="anonymous"
+    ></script>
+    <script src="/public/bundle.js"></script>
+      <link
+              rel="stylesheet"
+              href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css"
+      />
+    <style>
+      input[type=number] {
+        border-bottom: lightgray 1px solid;
+        text-align: right;
+        color: grey;
+      }
+    </style>
+  </head>
+  <body class="mx-auto h-full px-24">
+    <div class="flex flex-col flex-fill pb-24 space-y-4">
+      <div class="font-medium bg-grey-100 py-4 px-2 border-b">Physarum</div>
+      <div class="flex justify-between">
+        <form id="config" class="flex flex-col">
+          <label class="flex justify-between items-center p-1">
+            <span>width</span>
+            <input
+              type="number"
+              name="width"
+              placeholder="width"
+              value="{{ cfg.width }}"
+            />
+          </label>
+          <label class="flex justify-between items-center p-1">
+            <span>height</span>
+            <input
+              type="number"
+              name="height"
+              placeholder="height"
+              value="{{ cfg.height }}"
+            />
+          </label>
+          <label class="flex justify-between items-center p-1">
+            <span>iterations</span>
+            <input
+              type="number"
+              name="iterations"
+              placeholder="iterations"
+              step="100"
+              value="{{ cfg.iterations }}"
+            />
+          </label>
+          <label class="flex justify-between items-center p-1">
+            <span>blurRadius</span>
+            <input
+              type="number"
+              name="blurRadius"
+              placeholder="blurRadius"
+              value="{{ cfg.blur_radius }}"
+            />
+          </label>
+          <label class="flex justify-between items-center p-1">
+            <span>blurPasses</span>
+            <input
+              type="number"
+              name="blurPasses"
+              placeholder="blurPasses"
+              value="{{ cfg.blur_passes }}"
+            />
+          </label>
+          <label class="flex justify-between items-center p-1">
+            <span>num particles</span>
+            <div class="flex items-center space-x-2">
+              <input
+                type="range"
+                name="particles"
+                placeholder="particles"
+                min="10000"
+                value="{{ cfg.particles }}"
+                max="2000000"
+                onchange="$('#pf').text(this.value)"
+              />
+              <span id="pf" class="text-gray-500">{{ cfg.particles }}</span>
+            </div>
+          </label>
+          <label class="flex justify-between items-center p-1">
+            <span>zoomFactor</span>
+            <div class="flex items-center space-x-2">
+              <input
+                type="range"
+                name="zoomFactor"
+                placeholder="zoomFactor"
+                min="0.25"
+                value="{{ cfg.zoom_factor }}"
+                max="2"
+                step="0.05"
+                onchange="$('#zoomf').text(this.value)"
+              />
+              <span id="zoomf" class="text-gray-500">{{ cfg.zoom_factor }}</span>
+            </div>
+          </label>
+          <label class="flex justify-between items-center p-1">
+            <span>distrib</span>
+            <select class="text-gray-500" name="distrib">
+              <option value="1">uniform</option>
+              <option value="2">centroids</option>
+              <option value="3">centre</option>
+              <option value="4">grid</option>
+            </select>
+          </label>
+          <hr class="py-4"/>
+          <div id="#agents">
+          {% for i, a in enumerate(cfg.agents) %}
+            <div id="agent{{ i }}">
+            <label class="flex justify-between space-x-1"
+              ><span>color</span
+              ><input
+                type="color"
+                value="{{ a.color }}"
+                name="agent[{{ i }}][color]"
+            /></label>
+            <label class="flex justify-between space-x-1"
+              ><span>sensorAngle</span
+              ><input
+                type="number"
+                step="0.01"
+                value="{{ f"{a.sensor_angle:.2f}" }}"
+                name="agent[{{ i }}][sensorAngle]"
+            /></label>
+            <label class="flex justify-between space-x-1"
+              ><span>sensorDistance</span
+              ><input
+                type="number"
+                step="0.01"
+                value="{{ f"{a.sensor_distance:.2f}" }}"
+                name="agent[{{ i }}][sensorDistance]"
+            /></label>
+            <label class="flex justify-between space-x-1"
+              ><span>rotationAngle</span
+              ><input
+                type="number"
+                step="0.01"
+                value="{{ f"{a.rotation_angle:.2f}" }}"
+                name="agent[{{ i }}][rotationAngle]"
+            /></label>
+            <label class="flex justify-between space-x-1"
+              ><span>stepDistance</span
+              ><input
+                type="number"
+                step="0.01"
+                value="{{ f"{a.step_distance:.2f}" }}"
+                name="agent[{{ i }}][stepDistance]"
+            /></label>
+            <label class="flex justify-between space-x-1"
+              ><span>depositionAmount</span
+              ><input
+                type="number"
+                step="0.01"
+                value="{{ f"{a.deposition_amount:.2f}" }}"
+                name="agent[{{ i }}][depositionAmount]"
+            /></label>
+            <label class="flex justify-between space-x-1 pb-4"
+              ><span>decayFactor</span
+              ><input
+                type="number"
+                step="0.01"
+                value="{{ f"{a.decay_factor:.2f}" }}"
+                name="agent[{{ i }}][decayFactor]"
+            /></label>
+            </div>
+          {% end %}
+          </div>
+          <div class="flex items-center space-x-2 mx-auto">
+            <button type="button" id="addAg">+</button>
+            <button type="button" id="delAg">-</button>
+          </div>
+          <input type="submit" />
+        </form>
+        <div class="flex flex-col">
+          <span id="step">0/0</span>
+          <img id="lastImg" class="shadow-lg" src="" alt="last image" />
+          <video id="vid" controls>
+            <source id="videoSource" src="" type="video/mp4" />
+          </video>
+        </div>
+      </div>
+      <div id="websockstatus" class="px-4 py-2">Websocket status</div>
+    </div>
+    <script>
+      const form = $("#config");
+      const status = $("#websockstatus");
+      const video = $("#vid");
+      const videoSrc = $("#videoSource");
+      const img = $("#lastImg");
+      const step = $("#step");
+      const addAg = $("#addAg");
+      const delAg = $("#delAg");
+      img.hide();
+      step.hide();
+      video.hide();
+
+      const ws = new WebSocket("ws://" + window.location.host + "/ws");
+      ws.onopen = () => {
+        status.text("open").show();
+        status.addClass("bg-green-400");
+      };
+      ws.onclose = () => {
+        status.text("closed").show();
+        status.removeClass("bg-green-400");
+        status.addClass("bg-red-400");
+      };
+      ws.onmessage = ({ data }) => {
+        data.arrayBuffer().then((bytes) => {
+          const ev = proto.physarium.Event.deserializeBinary(bytes);
+          switch (ev.getContentCase()) {
+            case proto.physarium.Event.ContentCase.PICTURE:
+              const imgBlob = new Blob([ev.getPicture()], {
+                type: "image/png",
+              });
+              const imgUrl = URL.createObjectURL(imgBlob);
+              img.show();
+              img.attr("src", imgUrl);
+              break;
+            case proto.physarium.Event.ContentCase.VIDEO:
+              const vidBlob = new Blob([ev.getVideo()], { type: "video/mp4" });
+              const vidUrl = URL.createObjectURL(vidBlob);
+              videoSrc.attr("src", vidUrl);
+              video[0].load();
+              video.show();
+              img.hide();
+              step.hide();
+              break;
+            case proto.physarium.Event.ContentCase.STEP:
+              step.text(ev.getStep());
+              step.show();
+              break;
+            case proto.physarium.Event.ContentCase.CONTENT_NOT_SET:
+              step.text("erreur");
+              step.show();
+              break;
+          }
+        });
+      };
+
+      form.submit((ev) => {
+        ev.preventDefault();
+        const cfg = new proto.physarium.Config();
+        cfg.setWidth(parseInt($("input[name=width]").val()));
+        cfg.setHeight(parseInt($("input[name=height]").val()));
+        cfg.setParticles(parseInt($("input[name=particles]").val()));
+        cfg.setIterations(parseInt($("input[name=iterations]").val()));
+        cfg.setBlurRadius(parseInt($("input[name=blurRadius]").val()));
+        cfg.setBlurPasses(parseInt($("input[name=blurPasses]").val()));
+        cfg.setZoomFactor(parseFloat($("input[name=zoomFactor]").val()));
+        cfg.setIdist(parseInt($("select[name=distrib]").val()))
+
+        const nbAg = $("div[id^=agent]").length
+        for (let i = 0; i < nbAg; i++) {
+          const ag = new proto.physarium.AgentConfig()
+          ag.setColor($(`input[name="agent[${i}][color]"]`).val())
+          ag.setSensorAngle(parseFloat($(`input[name="agent[${i}][sensorAngle]"]`).val()))
+          ag.setSensorDistance(parseFloat($(`input[name="agent[${i}][sensorDistance]"]`).val()))
+          ag.setRotationAngle(parseFloat($(`input[name="agent[${i}][rotationAngle]"]`).val()))
+          ag.setStepDistance(parseFloat($(`input[name="agent[${i}][stepDistance]"]`).val()))
+          ag.setDepositionAmount(parseFloat($(`input[name="agent[${i}][depositionAmount]"]`).val()))
+          ag.setDecayFactor(parseFloat($(`input[name="agent[${i}][decayFactor]"]`).val()))
+          cfg.addAgents(ag);
+        }
+        ws.send(cfg.serializeBinary());
+        video.hide();
+      });
+
+      delAg.click(() => {
+        const nbAg = $("div[id^=agent]").length
+        $(`div[id^=agent${nbAg - 1}]`).remove()
+      })
+      addAg.click(() => {
+        const nbAg = $("div[id^=agent]").length
+        $(`div[id^=agent${nbAg - 1}]`).clone().prop("id", `agent${nbAg}`).insertAfter(`div[id^=agent${nbAg - 1}]`  )
+      })
+    </script>
+  </body>
+</html>
