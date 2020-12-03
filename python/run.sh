@@ -8,3 +8,4 @@ pushd js
 popd
 
 python -m physarum.server
+

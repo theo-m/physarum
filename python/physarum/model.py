@@ -8,7 +8,6 @@ from torchvision.transforms import GaussianBlur
 import colour
 
 # pip install torch torchvision tornado protobuf mypy-protobuf colour
-# protoc --python_out=python/physarum --mypy_out=python/physarum physarum.proto
 from .physarum_pb2 import AgentConfig, Config
 
 
@@ -16,14 +15,6 @@ from .physarum_pb2 import AgentConfig, Config
 seed = 1009
 print(f"seed: {seed}")
 torch.manual_seed(seed)
-
-
-def gauss(w: int, h: int, cx: float, cy: float, sx: float, sy: float) -> torch.Tensor:
-    x = torch.arange(w) - w / 2
-    y = torch.arange(h) - h / 2
-    gx = (-((x - cx) ** 2) / sx).exp().view(-1, 1)
-    gy = (-((y - cy) ** 2) / sy).exp().view(-1, 1)
-    return gx.mm(gy.t())
 
 
 def randomCfg() -> Config:
@@ -124,8 +115,8 @@ class Physarum:
         if cfg.idist == Config.InitDistribution.UNIFORM:
             inst.particles = torch.rand((n, 3), device=device) * torch.tensor((h, w, 2 * math.pi), device=device)
         elif cfg.idist == Config.InitDistribution.CENTRE:
-            xys = torch.tensor([[h / 2, w / 2]]) + torch.randn((n, 2), device=device) * min(h, w) // 8
-            inst.particles = torch.cat((xys, 2 * math.pi * torch.rand((n, 1))), 1)
+            xys = torch.tensor([[h / 2, w / 2]]) + torch.randn((n, 2)) * min(h, w) // 8
+            inst.particles = torch.cat((xys, 2 * math.pi * torch.rand((n, 1))), 1).to(device)
         elif cfg.idist == Config.InitDistribution.CENTROIDS:
             cc = []
             for _ in range(s):
@@ -133,7 +124,7 @@ class Physarum:
                 xys = ctr + torch.randn((c, 2)) * min(h, w) // random.randint(8, 16)
                 ps = torch.cat((xys, 2 * math.pi * torch.rand((c, 1))), 1)
                 cc.append(ps)
-            inst.particles = torch.cat(cc, 0)
+            inst.particles = torch.cat(cc, 0).to(device)
 
         def build_tensor(attr):
             ts = [torch.tensor([getattr(a, attr)] * c, device=device) for a in cfg.agents]
